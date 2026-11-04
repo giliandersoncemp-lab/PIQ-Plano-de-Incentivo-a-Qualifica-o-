@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIQ | Valide seu código</title>
+<meta name="description" content="Digite seu código PIQ, escolha o curso e o dia e veja o calendário das suas aulas gratuitas.">
+<style>
+  :root {
+    --bg: #f6f8fb;
+    --text: #14213d;
+    --muted: #5b6577;
+    --card: #ffffff;
+    --border: #dfe5ee;
+    --brand: #1d4ed8;
+    --brand-dark: #1e3a8a;
+    --accent: #f59e0b;
+    --wa: #16a34a;
+    --danger: #dc2626;
+    --ok: #16a34a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1424;
+      --text: #eef2fb;
+      --muted: #a2adc2;
+      --card: #161e33;
+      --border: #26304d;
+      --brand: #6b94ff;
+      --brand-dark: #1d4ed8;
+      --accent: #fbbf24;
+      --wa: #22c55e;
+      --danger: #f87171;
+      --ok: #4ade80;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.6;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+  [hidden] { display: none !important; }
+
+  header.top { border-bottom: 1px solid var(--border); }
+  header.top .wrap { padding-top: 14px; padding-bottom: 14px; font-weight: 700; }
+
+  .btn {
+    display: inline-block; padding: 13px 22px; border-radius: 12px; border: 0; cursor: pointer;
+    background: var(--brand); color: #fff; text-decoration: none; font-weight: 700; font-size: 1rem;
+  }
+  .btn:hover { background: var(--brand-dark); }
+  .btn.wa { background: var(--wa); }
+  .btn.wa:hover { filter: brightness(.92); }
+  .btn.ghost { background: transparent; color: var(--brand); border: 1.5px solid var(--brand); }
+  .btn.ghost:hover { background: transparent; opacity: .8; }
+  .btn.small { padding: 9px 16px; font-size: .92rem; }
+
+  .badge {
+    display: inline-block; background: color-mix(in srgb, var(--accent) 22%, transparent);
+    padding: 5px 12px; border-radius: 999px; font-size: .85rem; font-weight: 600; margin-bottom: 16px;
+  }
+
+  /* Tela 1: código */
+  .gate { padding: 64px 0 72px; text-align: center; }
+  .gate h1 { font-size: clamp(2rem, 6.5vw, 3rem); line-height: 1.12; margin: 0 0 14px; }
+  .gate h1 span { color: var(--brand); }
+  .gate p.lead { color: var(--muted); font-size: 1.1rem; max-width: 520px; margin: 0 auto 28px; }
+  .code-form { max-width: 420px; margin: 0 auto; display: grid; gap: 12px; }
+  .code-form input {
+    width: 100%; padding: 16px; border-radius: 12px; font-size: 1.3rem; text-align: center;
+    letter-spacing: .12em; text-transform: uppercase; font-weight: 700;
+    border: 2px solid var(--border); background: var(--card); color: var(--text);
+  }
+  .code-form input::placeholder { color: var(--muted); letter-spacing: .05em; font-weight: 500; text-transform: none; font-size: 1rem; }
+  .code-form input:focus { outline: none; border-color: var(--brand); }
+  .erro { color: var(--danger); font-weight: 600; min-height: 1.5em; margin: 0; }
+
+  .ok-box {
+    background: color-mix(in srgb, var(--ok) 14%, var(--card)); border: 1px solid var(--ok);
+    border-radius: 14px; padding: 16px 18px; margin-bottom: 24px;
+  }
+  .ok-box strong { color: var(--ok); }
+  .ok-box h2 { margin: 4px 0 0; font-size: 1.35rem; }
+  .ok-box p { margin: 4px 0 0; color: var(--muted); }
+
+  h2.sec { font-size: clamp(1.4rem, 4.5vw, 1.8rem); margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 22px; }
+
+  /* Tela 2: escolha */
+  .escolha { padding: 40px 0 56px; }
+  .esc-form {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 22px; display: grid; gap: 16px; max-width: 560px;
+  }
+  .field label { display: block; font-weight: 600; margin-bottom: 6px; }
+  .field small { display: block; color: var(--muted); margin-top: 4px; }
+  .field select, .field input {
+    width: 100%; padding: 13px 14px; border-radius: 10px; font-size: 1rem;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text);
+  }
+  .field select:focus, .field input:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+  .two { display: grid; gap: 16px; }
+  @media (min-width: 520px) { .two { grid-template-columns: 1.4fr 1fr; } }
+
+  /* Tela 3: resultado */
+  .result { padding: 40px 0 24px; }
+  .layout { display: grid; gap: 20px; }
+  @media (min-width: 760px) { .layout { grid-template-columns: 1.1fr 1fr; align-items: start; } }
+
+  .aulas { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .aulas li {
+    display: flex; gap: 14px; align-items: center;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px;
+  }
+  .aulas .num {
+    flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--brand); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
+  }
+  .aulas .info b { display: block; text-transform: capitalize; }
+  .aulas .info span { color: var(--muted); font-size: .92rem; }
+
+  .meses { display: grid; gap: 16px; }
+  .mes { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+  .mes h4 { margin: 0 0 10px; text-transform: capitalize; font-size: 1.05rem; text-align: center; }
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: .9rem; }
+  .cal .dow { color: var(--muted); font-size: .75rem; font-weight: 700; padding-bottom: 4px; }
+  .cal .d { padding: 7px 0; border-radius: 8px; }
+  .cal .d.aula { background: var(--brand); color: #fff; font-weight: 700; }
+  .cal .d.aula small { display: block; font-size: .6rem; line-height: 1; font-weight: 600; opacity: .9; }
+
+  .acoes { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+
+  /* Continuidade */
+  .cont { padding: 32px 0 56px; border-top: 1px solid var(--border); margin-top: 24px; }
+  .grid { display: grid; gap: 14px; }
+  @media (min-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 900px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px;
+    display: flex; flex-direction: column;
+  }
+  .card .tag { font-size: .76rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--brand); margin-bottom: 6px; }
+  .card h3 { margin: 0 0 8px; font-size: 1.1rem; }
+  .card p { margin: 0 0 16px; color: var(--muted); font-size: .95rem; flex: 1; }
+  .card .btn { align-self: flex-start; }
+
+  footer { padding: 24px 0 40px; color: var(--muted); font-size: .88rem; text-align: center; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">[Nome da Escola/Empresa] · Projeto PIQ</div>
+</header>
+
+<main>
+
+  <!-- TELA 1: pedir o código -->
+  <section id="tela-codigo" class="wrap gate">
+    <span class="badge">Plano de Incentivo à Qualificação</span>
+    <h1>Digite seu <span>código PIQ</span></h1>
+    <p class="lead">Valide seu código para liberar a sua vaga no curso gratuito.</p>
+
+    <form id="form-codigo" class="code-form" autocomplete="off">
+      <input type="text" id="codigo" placeholder="Ex.: LM02" maxlength="20" required
+             autocapitalize="characters" autocorrect="off" spellcheck="false" aria-label="Seu código PIQ">
+      <button class="btn" type="submit">Validar código</button>
+      <p class="erro" id="erro" role="alert"></p>
+    </form>
+  </section>
+
+  <!-- TELA 2: escolher curso e dia -->
+  <section id="tela-escolha" class="wrap escolha" hidden>
+    <div class="ok-box">
+      <strong>✔ Código validado</strong>
+      <h2>Sua vaga está liberada!</h2>
+      <p id="esc-codigo"></p>
+    </div>
+
+    <h2 class="sec">Escolha seu curso e o dia</h2>
+    <p class="sub">Informe qual curso você quer fazer e quando quer começar. São 4 aulas de 1 hora, uma por semana, sempre no mesmo dia da semana.</p>
+
+    <form id="form-escolha" class="esc-form">
+      <div class="field">
+        <label for="curso">Curso</label>
+        <select id="curso" required></select>
+      </div>
+      <div class="two">
+        <div class="field">
+          <label for="data">Dia da primeira aula</label>
+          <input type="date" id="data" required>
+          <small id="dia-semana"></small>
+        </div>
+        <div class="field">
+          <label for="hora">Horário</label>
+          <input type="time" id="hora" value="19:00" required>
+        </div>
+      </div>
+      <button class="btn" type="submit">Ver minhas aulas</button>
+      <p class="erro" id="erro2" role="alert"></p>
+    </form>
+  </section>
+
+  <!-- TELA 3: calendário -->
+  <section id="tela-resultado" class="wrap result" hidden>
+    <div class="ok-box">
+      <strong>✔ Aulas marcadas</strong>
+      <h2 id="res-titulo"></h2>
+      <p id="res-sub"></p>
+    </div>
+
+    <h2 class="sec">Suas aulas</h2>
+    <p class="sub">4 encontros, um por semana, com 1 hora cada.</p>
+
+    <div class="layout">
+      <ul class="aulas" id="lista-aulas"></ul>
+      <div class="meses" id="calendario"></div>
+    </div>
+
+    <div class="acoes">
+      <button class="btn ghost" type="button" id="btn-ics">Salvar na minha agenda</button>
+      <button class="btn ghost" type="button" id="btn-alterar">Alterar curso ou dia</button>
+      <button class="btn ghost" type="button" id="btn-outro">Usar outro código</button>
+    </div>
+  </section>
+
+  <!-- Continuidade (aparece junto com o calendário) -->
+  <section id="tela-continuidade" class="cont" hidden>
+    <div class="wrap">
+      <h2 class="sec">Quer dar continuidade?</h2>
+      <p class="sub">Depois do curso gratuito, escolha o formato que cabe na sua rotina. O contato abre em outra aba, sem você sair desta página.</p>
+
+      <div class="grid">
+        <article class="card">
+          <div class="tag">Profissionalizante</div>
+          <h3>Informática</h3>
+          <p>Aprenda o uso do computador e das ferramentas que o mercado de trabalho pede.</p>
+          <a class="btn wa small" data-curso="Informática" target="_blank" rel="noopener">Quero continuar</a>
+        </article>
+        <article class="card">
+          <div class="tag">Profissionalizante</div>
+          <h3>Administração</h3>
+          <p>Base para atuar em rotinas administrativas e crescer dentro das empresas.</p>
+          <a class="btn wa small" data-curso="Administração" target="_blank" rel="noopener">Quero continuar</a>
+        </article>
+        <article class="card">
+          <div class="tag">Profissionalizante</div>
+          <h3>Inglês</h3>
+          <p>Com professor particular ou em sala de aula, do jeito que combinar melhor com você.</p>
+          <a class="btn wa small" data-curso="Inglês" target="_blank" rel="noopener">Quero continuar</a>
+        </article>
+        <article class="card">
+          <div class="tag">EAD · Acesso vitalício</div>
+          <h3>Profissionalizantes EAD</h3>
+          <p>Perfeito para quem tem pouco tempo: o acesso é vitalício, então você estuda no seu ritmo.</p>
+          <a class="btn wa small" data-curso="Profissionalizantes EAD" target="_blank" rel="noopener">Quero continuar</a>
+        </article>
+        <article class="card">
+          <div class="tag">Técnicos</div>
+          <h3>Cursos técnicos</h3>
+          <p>Formação técnica para quem quer uma qualificação mais completa. Veja as opções disponíveis.</p>
+          <a class="btn wa small" data-curso="Cursos técnicos" target="_blank" rel="noopener">Quero continuar</a>
+        </article>
+        <article class="card">
+          <div class="tag">Dúvidas</div>
+          <h3>Falar com o consultor</h3>
+          <p>Quer entender melhor as opções antes de decidir? Me chame e eu explico tudo.</p>
+          <a class="btn wa small" data-curso="" target="_blank" rel="noopener">Chamar no WhatsApp</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">© <span id="ano"></span> [Nome da Escola/Empresa] · [Seu Nome]</div>
+</footer>
+
+<script>
+  // =====================  EDITE AQUI  =====================
+
+  // Seu WhatsApp com código do país e DDD, só números. Exemplo: 5521999998888
+  const WHATSAPP = "55DDXXXXXXXXX";
+
+  // Quantidade de aulas do curso gratuito (uma por semana, 1 hora cada)
+  const TOTAL_AULAS = 4;
+
+  // Códigos PIQ válidos (o código só libera a vaga).
+  // ATENÇÃO: LM02 é só um EXEMPLO. Coloque os seus códigos reais.
+  const CODIGOS = ["LM02"];
+
+  // Cursos que a pessoa pode escolher para o curso gratuito.
+  // ATENÇÃO: lista de EXEMPLO. Edite para os cursos que você oferece.
+  const CURSOS = ["Informática", "Administração", "Inglês"];
+
+  // ========================================================
+
+  const $ = (id) => document.getElementById(id);
+  const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  const DIAS = ["D","S","T","Q","Q","S","S"];
+  let atual = { codigo: "", curso: "", hora: "", datas: [] };
+
+  function parseData(s) {
+    const p = s.split("-").map(Number);
+    return new Date(p[0], p[1] - 1, p[2]);
+  }
+
+  function iso(d) {
+    const pad = (n) => String(n).padStart(2, "0");
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+
+  function datasDasAulas(inicio) {
+    const base = parseData(inicio);
+    const out = [];
+    for (let i = 0; i < TOTAL_AULAS; i++) {
+      const d = new Date(base);
+      d.setDate(base.getDate() + 7 * i);
+      out.push(d);
+    }
+    return out;
+  }
+
+  function horaFim(hora) {
+    const p = hora.split(":").map(Number);
+    return String((p[0] + 1) % 24).padStart(2, "0") + ":" + String(p[1]).padStart(2, "0");
+  }
+
+  function mostrar(id) {
+    ["tela-codigo", "tela-escolha", "tela-resultado", "tela-continuidade"].forEach(function (t) {
+      $(t).hidden = true;
+    });
+    $(id).hidden = false;
+    if (id === "tela-resultado") $("tela-continuidade").hidden = false;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function montarLista() {
+    const ul = $("lista-aulas");
+    ul.innerHTML = "";
+    atual.datas.forEach(function (d, i) {
+      const li = document.createElement("li");
+      const num = document.createElement("div");
+      num.className = "num";
+      num.textContent = i + 1;
+      const info = document.createElement("div");
+      info.className = "info";
+      const b = document.createElement("b");
+      b.textContent = d.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+      const s = document.createElement("span");
+      s.textContent = "Aula " + (i + 1) + " · " + atual.hora + " às " + horaFim(atual.hora);
+      info.appendChild(b);
+      info.appendChild(s);
+      li.appendChild(num);
+      li.appendChild(info);
+      ul.appendChild(li);
+    });
+  }
+
+  function montarCalendario() {
+    const cont = $("calendario");
+    cont.innerHTML = "";
+    const marcados = {};
+    atual.datas.forEach(function (d, i) {
+      marcados[d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate()] = i + 1;
+    });
+    const meses = [];
+    atual.datas.forEach(function (d) {
+      const k = d.getFullYear() + "-" + d.getMonth();
+      if (!meses.some(function (m) { return m.k === k; })) {
+        meses.push({ k: k, ano: d.getFullYear(), mes: d.getMonth() });
+      }
+    });
+    meses.forEach(function (m) {
+      const box = document.createElement("div");
+      box.className = "mes";
+      const h = document.createElement("h4");
+      h.textContent = MESES[m.mes] + " de " + m.ano;
+      box.appendChild(h);
+      const cal = document.createElement("div");
+      cal.className = "cal";
+      DIAS.forEach(function (n) {
+        const e = document.createElement("div");
+        e.className = "dow";
+        e.textContent = n;
+        cal.appendChild(e);
+      });
+      const primeiro = new Date(m.ano, m.mes, 1).getDay();
+      const total = new Date(m.ano, m.mes + 1, 0).getDate();
+      for (let i = 0; i < primeiro; i++) cal.appendChild(document.createElement("div"));
+      for (let dia = 1; dia <= total; dia++) {
+        const e = document.createElement("div");
+        e.className = "d";
+        const aula = marcados[m.ano + "-" + m.mes + "-" + dia];
+        if (aula) {
+          e.classList.add("aula");
+          e.appendChild(document.createTextNode(dia));
+          const sm = document.createElement("small");
+          sm.textContent = "Aula " + aula;
+          e.appendChild(sm);
+        } else {
+          e.textContent = dia;
+        }
+        cal.appendChild(e);
+      }
+      box.appendChild(cal);
+      cont.appendChild(box);
+    });
+  }
+
+  function atualizarLinksWhatsApp() {
+    document.querySelectorAll("[data-curso]").forEach(function (a) {
+      const curso = a.getAttribute("data-curso");
+      const msg = curso
+        ? "Olá! Sou participante do PIQ (código " + atual.codigo + ") e quero continuar com o curso: " + curso + "."
+        : "Olá! Sou participante do PIQ (código " + atual.codigo + ") e gostaria de tirar algumas dúvidas.";
+      a.href = "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(msg);
+    });
+  }
+
+  // Preencher a lista de cursos
+  CURSOS.forEach(function (c) {
+    const o = document.createElement("option");
+    o.value = c;
+    o.textContent = c;
+    $("curso").appendChild(o);
+  });
+
+  // Data mínima: amanhã
+  (function () {
+    const amanha = new Date();
+    amanha.setDate(amanha.getDate() + 1);
+    $("data").min = iso(amanha);
+  })();
+
+  $("data").addEventListener("input", function () {
+    if (!$("data").value) { $("dia-semana").textContent = ""; return; }
+    const nome = parseData($("data").value).toLocaleDateString("pt-BR", { weekday: "long" });
+    $("dia-semana").textContent = "As 4 aulas serão toda " + nome + ".";
+  });
+
+  // TELA 1 -> 2: validar código
+  $("form-codigo").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const codigo = $("codigo").value.replace(/\s+/g, "").toUpperCase();
+    if (CODIGOS.indexOf(codigo) === -1) {
+      $("erro").textContent = "Código não encontrado. Confira e tente de novo.";
+      return;
+    }
+    $("erro").textContent = "";
+    atual.codigo = codigo;
+    $("esc-codigo").textContent = "Código " + codigo;
+    mostrar("tela-escolha");
+  });
+  $("codigo").addEventListener("input", function () { $("erro").textContent = ""; });
+
+  // TELA 2 -> 3: gerar calendário
+  $("form-escolha").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!$("data").value) {
+      $("erro2").textContent = "Escolha o dia da primeira aula.";
+      return;
+    }
+    $("erro2").textContent = "";
+    atual.curso = $("curso").value;
+    atual.hora = $("hora").value;
+    atual.datas = datasDasAulas($("data").value);
+    const diaNome = atual.datas[0].toLocaleDateString("pt-BR", { weekday: "long" });
+    $("res-titulo").textContent = atual.curso;
+    $("res-sub").textContent = "Toda " + diaNome + ", às " + atual.hora + " · Código " + atual.codigo;
+    montarLista();
+    montarCalendario();
+    atualizarLinksWhatsApp();
+    mostrar("tela-resultado");
+  });
+
+  $("btn-alterar").addEventListener("click", function () { mostrar("tela-escolha"); });
+
+  $("btn-outro").addEventListener("click", function () {
+    atual = { codigo: "", curso: "", hora: "", datas: [] };
+    $("codigo").value = "";
+    $("form-escolha").reset();
+    $("dia-semana").textContent = "";
+    mostrar("tela-codigo");
+    $("codigo").focus();
+  });
+
+  // Baixar as aulas para a agenda do celular/computador (.ics)
+  $("btn-ics").addEventListener("click", function () {
+    if (!atual.datas.length) return;
+    const pad = function (n) { return String(n).padStart(2, "0"); };
+    const hp = atual.hora.split(":").map(Number);
+    const fim = horaFim(atual.hora).split(":").map(Number);
+    const linhas = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//PIQ//Aulas//PT-BR", "CALSCALE:GREGORIAN"];
+    atual.datas.forEach(function (d, i) {
+      const dia = d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
+      linhas.push(
+        "BEGIN:VEVENT",
+        "UID:piq-" + atual.codigo + "-" + dia + "-" + (i + 1) + "@piq",
+        "DTSTAMP:" + dia + "T000000",
+        "DTSTART:" + dia + "T" + pad(hp[0]) + pad(hp[1]) + "00",
+        "DTEND:" + dia + "T" + pad(fim[0]) + pad(fim[1]) + "00",
+        "SUMMARY:Aula " + (i + 1) + " - " + atual.curso + " (PIQ)",
+        "END:VEVENT"
+      );
+    });
+    linhas.push("END:VCALENDAR");
+    const blob = new Blob([linhas.join("\r\n")], { type: "text/calendar" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "aulas-piq.ics";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  $("ano").textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
